@@ -35,8 +35,11 @@ type Props = {};
 
 let interval: any = null;
 let stopTimeout: any = null;
+
+
+
 const HomePage = (props: Props) => {
-  const webcamRef = useRef<Webcam>(true);
+  const webcamRef = useRef<Webcam>(null); // Changed from true to null
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // state
@@ -53,29 +56,32 @@ const HomePage = (props: Props) => {
   useEffect(() => {
     const init = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      webcamRef.current.srcObject = stream;
-
-      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'video/webm' });
-
-        mediaRecorderRef.current.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            const recordedBlob = new Blob([e.data], { type: "video" });
-            const videoURL = URL.createObjectURL(recordedBlob);
-
-            const a = document.createElement("a");
-            a.href = videoURL;
-            a.download = `${formatDate(new Date())}.webm`;
-            a.click();
-          }
-        };
-        mediaRecorderRef.current.onstart = (e) => {
-          setIsRecording(true);
-        };
-        mediaRecorderRef.current.onstop = (e) => {
-          setIsRecording(false);
-        };
+      if (webcamRef.current && webcamRef.current.video) {
+        webcamRef.current.video.srcObject = stream;
       }
-    },[webcamRef])
+    
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          const recordedBlob = new Blob([e.data], { type: "video" });
+          const videoURL = URL.createObjectURL(recordedBlob);
+
+          const a = document.createElement("a");
+          a.href = videoURL;
+          a.download = `${formatDate(new Date())}.webm`;
+          a.click();
+        }
+      };
+      mediaRecorderRef.current.onstart = (e) => {
+        setIsRecording(true);
+      };
+      mediaRecorderRef.current.onstop = (e) => {
+        setIsRecording(false);
+      };
+    };
+    init();
+  }, []); // Removed webcamRef.current from the dependency array
 
   useEffect(() => {
     setLoading(true);
